@@ -1,16 +1,36 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 
-const ResumePreview = ({ resumeData }) => {
+const ResumePreview = ({ resumeData, onDownload }) => {
   if (!resumeData) {
     return (
       <div className="resume-preview">
-        <p>No resume data available. Please build your resume first.</p>
+        <div className="no-resume">
+          <h3>No Resume Created</h3>
+          <p>Please build your resume first to see the preview.</p>
+        </div>
       </div>
     );
   }
 
   const { personalInfo, summary, experience, education, skills } = resumeData;
+
+  const handleDownload = () => {
+    if (onDownload) {
+      onDownload();
+    } else {
+      // Basic download functionality
+      const dataStr = JSON.stringify(resumeData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${personalInfo.firstName}-${personalInfo.lastName}-resume.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  };
 
   return (
     <motion.div
@@ -18,15 +38,24 @@ const ResumePreview = ({ resumeData }) => {
       animate={{ opacity: 1 }}
       className="resume-preview"
     >
+      <div className="preview-header">
+        <h2>Resume Preview</h2>
+        <button onClick={handleDownload} className="btn-primary">
+          <Download className="w-4 h-4" />
+          Download
+        </button>
+      </div>
+
       <div className="resume-document">
         {/* Header */}
         <header className="resume-header">
           <h1>{personalInfo.firstName} {personalInfo.lastName}</h1>
           <div className="contact-info">
             {personalInfo.email && <span>{personalInfo.email}</span>}
-            {personalInfo.phone && <span>{personalInfo.phone}</span>}
-            {personalInfo.location && <span>{personalInfo.location}</span>}
-            {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
+            {personalInfo.phone && <span>• {personalInfo.phone}</span>}
+            {personalInfo.location && <span>• {personalInfo.location}</span>}
+            {personalInfo.linkedin && <span>• {personalInfo.linkedin}</span>}
+            {personalInfo.portfolio && <span>• {personalInfo.portfolio}</span>}
           </div>
         </header>
 
@@ -45,13 +74,19 @@ const ResumePreview = ({ resumeData }) => {
             {experience.map((exp, index) => (
               <div key={index} className="experience-item">
                 <div className="experience-header">
-                  <h3>{exp.position}</h3>
-                  <span className="company">{exp.company}</span>
+                  <div>
+                    <h3>{exp.position}</h3>
+                    <span className="company">{exp.company}</span>
+                  </div>
                   <span className="date">
                     {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
                   </span>
                 </div>
-                {exp.description && <p>{exp.description}</p>}
+                {exp.description && (
+                  <div className="experience-description">
+                    <p>{exp.description}</p>
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -64,13 +99,19 @@ const ResumePreview = ({ resumeData }) => {
             {education.map((edu, index) => (
               <div key={index} className="education-item">
                 <div className="education-header">
-                  <h3>{edu.degree} in {edu.field}</h3>
-                  <span className="institution">{edu.institution}</span>
+                  <div>
+                    <h3>{edu.degree} in {edu.field}</h3>
+                    <span className="institution">{edu.institution}</span>
+                  </div>
                   <span className="date">
                     {edu.startDate} - {edu.endDate}
                   </span>
                 </div>
-                {edu.gpa && <p>GPA: {edu.gpa}</p>}
+                {edu.gpa && (
+                  <div className="education-details">
+                    <p>GPA: {edu.gpa}</p>
+                  </div>
+                )}
               </div>
             ))}
           </section>

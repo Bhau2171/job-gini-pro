@@ -22,7 +22,8 @@ export const AuthProvider = ({ children }) => {
         .then(userData => {
           setUser(userData);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('Token verification failed:', error);
           localStorage.removeItem('token');
         })
         .finally(() => {
@@ -34,17 +35,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const response = await authAPI.login(email, password);
-    setUser(response.user);
-    localStorage.setItem('token', response.token);
-    return response;
+    try {
+      const response = await authAPI.login(email, password);
+      setUser(response.user);
+      localStorage.setItem('token', response.token);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const register = async (userData) => {
-    const response = await authAPI.register(userData);
-    setUser(response.user);
-    localStorage.setItem('token', response.token);
-    return response;
+    try {
+      const response = await authAPI.register(userData);
+      setUser(response.user);
+      localStorage.setItem('token', response.token);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
@@ -52,11 +61,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
+    updateUser,
     loading
   };
 

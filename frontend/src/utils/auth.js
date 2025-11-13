@@ -59,4 +59,24 @@ export const resumeAPI = {
     api.get('/resume').then(res => res.data)
 };
 
+export const interviewAPI = {
+  getQuestions: (domain, difficulty, category) => {
+    const params = new URLSearchParams();
+    if (domain) params.append('domain', domain);
+    if (difficulty) params.append('difficulty', difficulty);
+    if (category) params.append('category', category);
+    
+    return api.get(`/interview/questions?${params}`).then(res => res.data);
+  },
+  
+  getCategories: () => 
+    api.get('/interview/categories').then(res => res.data),
+  
+  getDomains: () => 
+    api.get('/interview/domains').then(res => res.data),
+  
+  addQuestion: (questionData) => 
+    api.post('/interview/questions', questionData).then(res => res.data)
+};
+
 export default api;

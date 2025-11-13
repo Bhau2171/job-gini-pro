@@ -77,7 +77,7 @@ const Home = () => {
             className="section-header"
           >
             <h2>Everything You Need to Succeed</h2>
-            <p>Comprehensive tools and insights for your career development</p>
+            {/* <p>Comprehensive tools and insights for your career development</p> */}
           </motion.div>
 
           <div className="features-grid">

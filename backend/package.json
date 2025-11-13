@@ -1,0 +1,36 @@
+{
+  "name": "career-guidance-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Career Guidance Web Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init-db": "node config/database.js"
+  },
+  "keywords": [
+    "career",
+    "guidance",
+    "api",
+    "express",
+    "sqlite"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^6.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

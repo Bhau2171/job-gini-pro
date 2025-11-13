@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="footer-section">
             <div className="footer-logo">
               <GraduationCap className="w-8 h-8" />
-              <span>CareerPath</span>
+              <span>JobGenie</span>
             </div>
             <p className="footer-description">
               Empowering individuals with data-driven career guidance, 
@@ -62,7 +62,7 @@ const Footer = () => {
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 CareerPath. All rights reserved.</p>
+          <p>&copy; 2025 JOB-GENIE. All rights reserved.</p>
           <p>Built with ❤️ for career growth and development</p>
         </div>
       </div>

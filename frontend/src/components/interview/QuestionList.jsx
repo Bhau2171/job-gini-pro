@@ -1,52 +1,147 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Filter } from 'lucide-react';
+import { interviewAPI } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../common/LoadingSpinner';
 
-const QuestionList = ({ categories }) => {
+const QuestionList = () => {
+  const [questions, setQuestions] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    difficulty: 'All Levels',
+    category: 'All Categories'
+  });
 
-  // Mock questions data - in real app, fetch from API
-  const questionsData = {
-    'Technical-Beginner': [
-      {
-        id: 1,
-        question: "What is the difference between let, const, and var in JavaScript?",
-        answer: "var is function-scoped and can be redeclared, let is block-scoped and can be reassigned, const is block-scoped but cannot be reassigned."
-      },
-      {
-        id: 2,
-        question: "Explain the concept of closures in JavaScript.",
-        answer: "Closures are functions that have access to variables in their outer scope even after the outer function has returned."
-      }
-    ],
-    'Technical-Intermediate': [
-      {
-        id: 3,
-        question: "How does React's virtual DOM work?",
-        answer: "The virtual DOM is a lightweight copy of the actual DOM. React uses it to perform diffing and update only the necessary parts of the real DOM."
-      }
-    ]
+  const { user } = useAuth();
+
+  useEffect(() => {
+    loadQuestions();
+  }, [user?.domain]);
+
+  useEffect(() => {
+    filterQuestions();
+  }, [questions, searchTerm, filters]);
+
+  const loadQuestions = async () => {
+    setLoading(true);
+    try {
+      const response = await interviewAPI.getQuestions(user?.domain);
+      setQuestions(response.questions || []);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(response.questions.map(q => q.category))];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleCategory = (categoryKey) => {
-    setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey);
+  const filterQuestions = () => {
+    let filtered = questions;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(q =>
+        q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.answer_guide.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply difficulty filter
+    if (filters.difficulty !== 'All Levels') {
+      filtered = filtered.filter(q => q.difficulty_level === filters.difficulty);
+    }
+
+    // Apply category filter
+    if (filters.category !== 'All Categories') {
+      filtered = filtered.filter(q => q.category === filters.category);
+    }
+
+    setFilteredQuestions(filtered);
   };
+
+  const toggleCategory = (category) => {
+    setExpandedCategory(expandedCategory === category ? null : category);
+  };
+
+  const getQuestionsByCategory = (category) => {
+    return filteredQuestions.filter(q => q.category === category);
+  };
+
+  const getUniqueCategories = () => {
+    return [...new Set(filteredQuestions.map(q => q.category))];
+  };
+
+  if (loading) {
+    return <LoadingSpinner text="Loading interview questions..." />;
+  }
 
   return (
     <div className="question-list">
-      <h2>Practice Questions</h2>
-      <p className="section-description">
-        Practice with domain-specific interview questions. Click on a category to expand.
-      </p>
+      <div className="questions-header">
+        <h2>Interview Questions</h2>
+        <p>Practice questions for {user?.domain} domain</p>
+      </div>
 
+      {/* Search and Filters */}
+      <div className="questions-controls">
+        <div className="search-box">
+          <Search className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search questions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <div className="filter-controls">
+          <div className="filter-group">
+            <Filter className="filter-icon" />
+            <select
+              value={filters.difficulty}
+              onChange={(e) => setFilters(prev => ({ ...prev, difficulty: e.target.value }))}
+              className="filter-select"
+            >
+              <option value="All Levels">All Levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+              className="filter-select"
+            >
+              <option value="All Categories">All Categories</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Questions List */}
       <div className="categories-list">
-        {categories.map((category, index) => {
-          const categoryKey = `${category.category}-${category.difficulty_level}`;
-          const questions = questionsData[categoryKey] || [];
-
+        {getUniqueCategories().map((category, index) => {
+          const categoryQuestions = getQuestionsByCategory(category);
+          
           return (
             <motion.div
-              key={categoryKey}
+              key={category}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -54,15 +149,16 @@ const QuestionList = ({ categories }) => {
             >
               <div 
                 className="category-header"
-                onClick={() => toggleCategory(categoryKey)}
+                onClick={() => toggleCategory(category)}
               >
                 <div className="category-info">
-                  <h3>{category.category}</h3>
-                  <span className="difficulty-badge">{category.difficulty_level}</span>
-                  <span className="questions-count">{questions.length} questions</span>
+                  <h3>{category}</h3>
+                  <span className="questions-count">
+                    {categoryQuestions.length} question{categoryQuestions.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
                 <div className="expand-icon">
-                  {expandedCategory === categoryKey ? 
+                  {expandedCategory === category ? 
                     <ChevronUp className="w-5 h-5" /> : 
                     <ChevronDown className="w-5 h-5" />
                   }
@@ -70,25 +166,33 @@ const QuestionList = ({ categories }) => {
               </div>
 
               <AnimatePresence>
-                {expandedCategory === categoryKey && (
+                {expandedCategory === category && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     className="questions-container"
                   >
-                    {questions.map((q, qIndex) => (
+                    {categoryQuestions.map((question, qIndex) => (
                       <motion.div
-                        key={q.id}
+                        key={question.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: qIndex * 0.1 }}
                         className="question-item"
                       >
-                        <h4>Q: {q.question}</h4>
-                        <div className="answer">
-                          <strong>A:</strong> {q.answer}
+                        <div className="question-header">
+                          <h4>{question.question}</h4>
+                          <span className={`difficulty-badge ${question.difficulty_level.toLowerCase()}`}>
+                            {question.difficulty_level}
+                          </span>
                         </div>
+                        {question.answer_guide && (
+                          <div className="answer-guide">
+                            <strong>Answer Guide:</strong>
+                            <p>{question.answer_guide}</p>
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </motion.div>
@@ -98,6 +202,12 @@ const QuestionList = ({ categories }) => {
           );
         })}
       </div>
+
+      {filteredQuestions.length === 0 && (
+        <div className="no-questions">
+          <p>No questions found matching your criteria.</p>
+        </div>
+      )}
     </div>
   );
 };
